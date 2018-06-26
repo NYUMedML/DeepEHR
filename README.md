@@ -4,6 +4,6 @@ Pre-trained embeddings and scripts to run / evaluate model as shown in Paper: li
 
 ## Generate synthetic data
 
-'''
+```
 python makeData.py
-'''
+```
