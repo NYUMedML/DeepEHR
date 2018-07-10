@@ -28,11 +28,12 @@ import torch.optim as optim
 ## ====== Data Loaders ============
 class encDataset(Dataset):
     # Each record is: [[text_enc1, text_enc2, ...], [num_enc1, num_enc2, ...], disease, mask, age, gender, race, eth]
-    def __init__(self, root_dir, dsName, transform=None):
+    def __init__(self, root_dir, dsName, nClassGender, nClassRace, nClassEthnic, transform=None):
         self.root_dir = root_dir
         self.ds = json.load(open(root_dir + dsName, 'r'))
         print('Loaded: ', dsName)
         self.transform = transform
+        self.nClass = [nClassGender, nClassRace, nClassEthnic]
 
     def __len__(self):
         return len(self.ds)
@@ -54,9 +55,9 @@ class encDataset(Dataset):
         Mask = np.asarray(Mask, dtype='int')
         Age = np.asarray(Age, dtype='float32')
 
-        gender2 = self._idx2onehot(gender, 2)
-        race2 = self._idx2onehot(race, 25)
-        eth2 = self._idx2onehot(eth, 29)
+        gender2 = self._idx2onehot(gender, self.nClass[0])
+        race2 = self._idx2onehot(race, self.nClass[1])
+        eth2 = self._idx2onehot(eth, self.nClass[2])
 
         Demo = np.concatenate([gender2, race2, eth2])
         sample = {'Note': Note, 'Num': Num, 'Disease': Disease, 'Mask': Mask, 'Age': Age, 'Demo': Demo}
@@ -327,7 +328,6 @@ class DemoLab(nn.Module):
         - flg_cuda: use GPU or not
         - emb_dim: embedding dimension, do not need if provide embedding
         - randn_std: std of random noise on embedding
-        - n_words: dimension of the numer
         """
 
         super(DemoLab, self).__init__()

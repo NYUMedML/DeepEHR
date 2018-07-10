@@ -10,6 +10,7 @@ import sys
 import time
 import gc
 import pickle
+import os
 
 import enc_model as m3
 # import pandas as pd
@@ -31,6 +32,10 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--nClassGender", type = int, default=2) # Number of classes in gender variable
+    parser.add_argument("--nClassRace", type=int, default=25)  # Number of classes in race variable
+    parser.add_argument("--nClassEthnic", type=int, default=29)  # Number of classes in ethnic variable
+
     parser.add_argument("--modelName", default="Enc_CNN_LSTM")
     parser.add_argument("--dimLSTM", type=int, default=128)  # LSTM dimension
     parser.add_argument("--dimLSTM_num", type=int, default=128)  # LSTM dimension for numericals
@@ -69,6 +74,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     torch.manual_seed(args.randSeed)  # For reproducible results
+    if args.flgSave:
+        if not os.path.isdir(args.savePath):
+            os.mkdir(args.savePath)
 
     # args.d = ['chf', 'kf', 'str'][args.i -1]
     # lsAlpha = [0.0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
@@ -88,11 +96,11 @@ if __name__ == '__main__':
     # if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM']:
     embedding = pickle.load(open(args.inputPath + 'embedding.p', 'rb'))
     embedding = torch.from_numpy(embedding).float()
-    trainset_pos = m3.encDataset(root_dir=args.inputPath, dsName='dfTrainPos.json',
+    trainset_pos = m3.encDataset(args.inputPath, 'dfTrainPos.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
                                  transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
-    trainset_neg = m3.encDataset(root_dir=args.inputPath, dsName='dfTrainNeg.json',
+    trainset_neg = m3.encDataset(args.inputPath, 'dfTrainNeg.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
                                  transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
-    testset = m3.encDataset(root_dir=args.inputPath, dsName='dfDev.json',
+    testset = m3.encDataset(args.inputPath, 'dfDev.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
                             transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
 
     print('To Loader')
@@ -144,7 +152,7 @@ if __name__ == '__main__':
 
     _, lsTrainAccuracy, lsTestAccuracy = m.run()
     testAuc = [np.mean(x[1]) for x in lsTestAccuracy]
-    print('Test accuracy max: %.3f' % (max(testAuc)))
-    print('Test accuracy final: %.3f' % (testAuc[-1]))
+    print('Test AUC max: %.3f' % (max(testAuc)))
+    print('Test AUC final: %.3f' % (testAuc[-1]))
     stopIdx = min(testAuc.index(max(testAuc)) * args.logInterval, args.n_iter)
     print('Stop at: %d' % (stopIdx))
