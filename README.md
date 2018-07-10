@@ -78,4 +78,5 @@ Test accuracy final: 0.519
 Stop at: 1
 ```
 The 0, 1, 2 Training/Test set Accuracy/AUC/F1 entries are the training / test performance metrics for the three disease types, respectively. The order is the same as your input disease vector.
+
 (Since we run the model on randomly generated synthetic data, the test AUC is around random)
