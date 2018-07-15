@@ -12,6 +12,10 @@ Pre-trained embeddings and scripts to run / evaluate model as shown in Paper: li
 python3 -u makeData.py
 ```
 
+## Models
+### CNN
+![alt text](https://github.com/NYUMedML/DeepEHR/blob/master/images/CNN.png)
+
 ## Train models
 The following shows the training statement of the encounter level CNN-LSTM model; training statement of other models are available in the run.sh file. You can find all potential input arguments and their definitions in the trainModel.py script.
 
