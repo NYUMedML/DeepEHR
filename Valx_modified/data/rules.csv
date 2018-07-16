@@ -1,0 +1,64 @@
+(≥|>|≤|<|=|/|\\|\(|\)|\[|\]|\{|\}), \1 ,preprocessing
+-(\d+),- \1,preprocessing
+(^|\s)h/h(\s|$), hemoglobin to hematocrit ,preprocessing
+(--|- -| -|- |~~|~ ~|~), - ,preprocessing
+(^|\s+)mg(\s+)(\d+), magnesium \3,preprocessing
+(?<!(\w|<|>|=))(mmol l - 1|miu / ml minimum|9 / l|ml / min / 1\.73 m2|ml / min1|ml / min  -  1|ml / min per 1\.73 m2|ml / min / m2\{1\.73\}|ml / min / 1\.73m2|signs / symptoms)(?!(\w|-)),<Unit>\2</Unit>,process_special_unit
+(?<!(\w|<|>|=|/|\.|\+|:|\^|x))(\d+(\.\d+|) x \d+(\.\d+|)|\d+(\^| \^ )\d+|\d+(\.\d+|))(?!(\d|-|/|\+\d|:)),<VML>\2</VML> ,process_numerical_values
+  , ,process_numerical_values
+<VML>([^<>]+)</VML> (st|nd|rd|th)(?!(\w)),\1\2,process_numerical_values
+(\w - )<VML>([^<>]+)</VML>,\1\2,process_numerical_values
+"(\A|\( |\[ |\{ |,|, |;|; )<VML>([^<>]+)</VML> (\)|\]|\})",\1\2 \3,process_numerical_values
+<VML>([^<>]+)</VML> (-|/|\\) <VML>([^<>]+)</VML> (-|/|\\) <VML>([^<>]+)</VML>,\1\2\3\4\5,process_numerical_values
+ (around|about) <VML>([^<>]+)</VML>, <VML>\2</VML>,process_numerical_values
+(?<!(\w|=|<|>|/))(mmol li+|mmol l|fl|mol l|miu/ml minimum|miu/ml|centimetre of water|centimeter of water|cmH2O|cm H2O|x institutional upper limit of normal|x the upper limit of normal|x upper limits of normal|x upper limit of normal|x normal upper limit|x uln|the upper limit of normal|upper limits of normal|upper limit of normal|normal upper limit|uln|mm\^3|mm3|kg2|ng ml|ng|ug|mmol|mol|percentiu|nmol|m\^2|\.m2|m\(2\)|kg m2|m2|kgm-2|in2|micromol|umol|mmhg|mm hg|millimeters of mercury|mm|hg|pmol|%|percent|uiu|iu|ul|ml min|ml|mg day|mg kg|g dl|mg dl|mg|dl|uln|gm|cm3|cc's|cm|mcg|microns|rads|pg|um|torr|u|g|l|m|%|times|iuln|mcl|study|studies|cns|nyha|d|ptt|pt|nsaid|copy|copies|iud|giga|F|C|v|vwd|category|categories|oads|liquid stools|pack years|pack - years|kilograms|square meters|meters|millimoles|liters|kgs|grams|beats|lbs|miles|cells|degrees|drinks|msecs|patients|quadrants|readings|lesions|regimens|foots|cigarettes|crises|devices|doses|diameters|agents|units|scans|episodes|methods|movements|sites|signs|events|symptoms|eggs|dosages|subjects|joints|items|examinations|exams|points|courses|forms|measurements|features|criterions|high power fields|examples|samples|occasions|persons|incidents|liquid stool|pack year|pack - year|kilogram|square meter|meter|millimole|liter|kg|gram|beat|lb|mile|cell|degree|drink|msec|patient|quadrant|reading|lesion|regimen|foot|cigarette|crise|device|dose|diameter|agent|unit|scan|episode|method|movement|site|sign|event|symptom|egg|dosage|subject|joint|item|examination|exam|point|course|form|measurement|feature|criterion|high power field|example|sample|occasion|person|incident|msec|second|minute|hour|h|daily|day|week|month|year|yr|y|consecutive day|night|msecs|seconds|minutes|mins|hours|hs|dailys|days|weeks|months|years|yrs|ys|consecutive days|nights)(?!(\w|<|>|/)),<Unit>\2</Unit>,process_all_other_units
+<Unit>([^<>]+)</Unit> (/|\\) <Unit>([^<>]+)</Unit>,<Unit>\1/\3</Unit>,process_all_other_units
+/VML>(mmol|mol|miu|ml|centimetre|cm|uln|mm|mm3|kg|kg2|ng||ug|percentiu|nmol|m|m2|kgm|in|micromol|umol|mmhg|mm hg|millimeters|pmol|%|percent|uiu|iu|ul|min|mg|kg|g|dl|gm|cm3|cc's|mcg|microns|rads|pg|um|torr|u|g|l|m|times|mcl|cns|liters|kgs|grams|beats|lbs|miles|degrees|msecs|foots|units|year|kilogram|square meter|meter|millimole|liter|kg|gram|beat|lb|mile|degree|second|minute|min|hour|h|daily|day|week|month|year|seconds|minutes|mins|hours|hs|days|weeks|months|years|yrs|ys) (/|\\) (\w+)(?!(\w|<|>)),/VML> <Unit>\1/\3</Unit>,process_all_other_units
+<Unit>([^<>]+)</Unit> (per|a|every|each) (\w*)( |)<Unit>([^<>]+)</Unit>,<Unit>\1/\3\4\5</Unit>,process_all_other_units
+<VML>([^<>]+)</VML>( -| of|) <Unit>([^<>]+)</Unit>,<VML Unit=\3>\1</VML>,merge_numerics_and_unit_tags
+<VML>([^<>]+)</VML>( /| \\) <Unit>([^<>]+)</Unit>,<VML Unit=/\3>\1</VML>,merge_numerics_and_unit_tags
+<VML([^<>]*)>([^<>]+)</VML> (daily|monthly|weekly|hourly|yearly)(?!(\w|<|>)),<VML\1 \3>\2</VML>,merge_numerics_and_unit_tags
+<VML>([^<>]+)</VML>,<VML Unit=>\1</VML>,merge_numerics_and_unit_tags
+"<VML Unit([^<>]+)>([^<>]+)</VML> (< =|= <) ([^<>\(\[\{,]+) (< =|= <|<) <VML Unit([^<>]+)>",<VL Label=\4 Source=Context>\4</VL> <VML Logic=greater_equal Unit\1>\2</VML> - \5 <VML Unit\6>,process_special_logics
+"<VML Unit([^<>]+)>([^<>]+)</VML> (<) ([^<>\(\[\{,]+) (< =|= <|<) <VML Unit([^<>]+)>",<VL Label=\4 Source=Context>\4</VL> <VML Logic=greater Unit\1>\2</VML> - \5 <VML Unit\6>,process_special_logics
+"<VML Unit([^<>]+)>([^<>]+)</VML> (> =|= >) ([^<>\(\[\{,]+) (> =|= >|>) <VML Unit([^<>]+)>",<VL Label=\4 Source=Context>\4</VL> <VML Logic=lower_equal Unit\1>\2</VML> - \5 <VML Unit\6>,process_special_logics
+"<VML Unit([^<>]+)>([^<>]+)</VML> (>) ([^<>\(\[\{,]+) (> =|= >|>) <VML Unit([^<>]+)>",<VL Label=\4 Source=Context>\4</VL> <VML Logic=lower Unit\1>\2</VML> - \5 <VML Unit\6>,process_special_logics
+<VML Unit([^<>]+)>([^<>]+)</VML> (< =|= <) ([a-z]\w+),<VML Logic=greater_equal Unit\1>\2</VML> \4,process_special_logics
+<VML Unit([^<>]+)>([^<>]+)</VML> (<) ([a-z]\w+),<VML Logic=greater Unit\1>\2</VML> \4,process_special_logics
+<VML Unit([^<>]+)>([^<>]+)</VML> (> =|= >) ([a-z]\w+),<VML Logic=lower_equal Unit\1>\4,process_special_logics
+<VML Unit([^<>]+)>([^<>]+)</VML> (>) ([a-z]\w+),<VML Logic=lower Unit\1>\2</VML> \4,process_special_logics
+ (the|this|these|those) (last|past|previous|recent|next|following|upcoming|preceding) <VML Unit=([^<>]*)>([^<>]+)</VML>, <VML Unit=\2 \3>\4</VML>,process_special_temporal
+ (the|this|these|those) <VML Unit=([^<>]*)>([^<>]+)</VML>, <VML Unit=\2>\3</VML>,process_special_temporal
+ (in|during|for|of|) (last|past|previous|recent|next|following|upcoming|preceding) <VML Unit=([^<>]*)>([^<>]+)</VML>, <VML Logic=lower_equal Unit=\2 \3>\4</VML>,process_special_temporal
+(?<!(\w|<|>|=))(more than or equal to|equal to or greater than|equal to or higher than|equal to or more than|equal or greater than|equal to or above|superior or equal to|greater than or equal to|greater or equal to|higher or equal than|higher or equal to|greater than or equal|great or equal to|greater / equal|above or equal to|minimum|> or equal to|≥|> =|= >|> or = to|= or >|> or =|> / =|at least|\+)(?!(\w|<|>)),<Logic>greater_equal</Logic>,process_logic
+(?<!(\w|<|>|=))(higher than|minimum|min|greater than|greater|above|more than|over|superior to|exceeding|exceed|>|larger than|older than|prior) <VML,<Logic>greater</Logic> <VML,process_logic
+(VML>|Unit>) (or higher|or above|or greater|or more|and above|or over|or older|or bigger|and older|and over)(?!(\w|<|>)),\1 <Logic>greater_equal</Logic>,process_logic
+(?<!(\w|<|>|=))(no more or around|below or equal to|lower or equal to|small than or equal to|less than or equal to|less than or equal|less or equal to|lesser than or equal to|lesser or equal to|lower than or equal to|equal to or lower than|equal to or below|equal to or less than|equal or less than|up to and including|smaller / equal|at most|up to|maximum|max|< or equal to|= <|< =|≤|< or = to|< or =|< / =|< -|= or <)(?!(\w|<|>)),<Logic>lower_equal</Logic>,process_logic
+(?<!(\w|<|>|=))(less than|lesser than|below|under|within|<|lower than|worse than|younger than) <VML,<Logic>lower</Logic> <VML,process_logic
+(VML>|Unit>) (or lower|or below|or less|or lesser|at most|or younger|and younger)(?!(\w|<|>)),\1 <Logic>lower_equal</Logic>,process_logic
+(?<!(\w|<|>|=))(equal to|=)(?!(\w|<|>)),<Logic>equal</Logic>,process_logic
+<VML>([^<>]+)</VML> <Logic>([^<>]+)</Logic> <Unit>([^<>]+)</Unit>,<VML Logic=\2 Unit=\3>\1</VML>,process_other_special_logics
+<Logic>([^<>]+)</Logic> <Logic>equal</Logic>,<Logic>\1</Logic>,process_other_special_logics
+<Logic>([^<>]+)</Logic> <VML Unit([^<>]+)>([^<>]+)</VML>,<VML Logic=\1 Unit\2>\3</VML>,process_other_special_logics
+<VML Logic=equal Unit([^<>]+)>([^<>]+)</VML> <Logic>([^<>]+)</Logic>,<VML Logic=\3 Unit\1>\2</VML>,process_other_special_logics
+<VML Unit([^<>]+)>([^<>]+)</VML> (|of [^ ]+ |[^ ]+ )<Logic>([^<>]+)</Logic>,<VML Logic=\4 Unit\1>\2</VML>\3,process_other_special_logics
+<Logic>equal</Logic> <VML Logic=([^<>]+)>([^<>]+)</VML>,equal <VML Logic=\1>\2</VML>,process_other_special_logics
+<Logic>([^<>]+)</Logic> <VML Logic=greater_equal Unit=([^<>]*)>([^<>]+)</VML> - <VML Logic=lower_equal Unit=([^<>]*)>([^<>]+)</VML>,<VML Logic=\1 Unit=\2>\3</VML> - <VML Logic=\1 Unit=\4>\5</VML>,process_other_special_logics
+ (in|during) <VML Unit=([^<>]*)>([^<>]+)</VML>, <VML Logic=lower_equal Unit=\2>\3</VML>,process_special_temporal_2
+<VML Unit=([^<>]*)>([^<>]+)</VML>,<VML Logic=equal Unit=\1>\2</VML>,process_special_temporal_2
+<VML ([^<>]+) Unit=>([^<>]+)</VML> (-|and|or|to) <VML ([^<>]+) Unit=([^<>]+)>([^<>]+)</VML>,<VML \1 Unit=\5>\2</VML> - <VML \4 Unit=\5>\6</VML>,context-based_validation
+<VML ([^<>]+) Unit=([^<>]+)>([^<>]+)</VML> (-|and|or|to) <VML ([^<>]+) Unit=>([^<>]+)</VML>,<VML \1 Unit=\2>\3</VML> - <VML \5 Unit=\2>\6</VML>,context-based_validation
+<VML ([^<>]+) Unit=>([^<>]+)</VML> <Unit>([^<>]+)</Unit>,<VML \1 Unit=\3>\2</VML>,context-based_validation
+<Unit>([^<>]+)</Unit> <VML Logic=([^<>]+) Unit=>([^<>]+)</VML>,<VML Logic=\2 Unit=\1>\3</VML>,context-based_validation
+(?<!(\w|<|>|=))(not able to|not allowed to|not to|not|none|non|no|never|unlikely) <VML Logic=greater Unit=([^<>]*)>([^<>]+)</VML>,<VML Logic=lower_equal Unit=\3>\4</VML>,process_negations
+(?<!(\w|<|>|=))(not able to|not allowed to|not to|not|none|non|no|never|unlikely) <VML Logic=greater_equal Unit=([^<>]*)>([^<>]+)</VML>,<VML Logic=lower Unit=\3>\4</VML>,process_negations
+(?<!(\w|<|>|=))(not able to|not allowed to|not to|not|none|non|no|never|unlikely) <VML Logic=lower Unit=([^<>]*)>([^<>]+)</VML>,<VML Logic=greater_equal Unit=\3>\4</VML>,process_negations
+(?<!(\w|<|>|=))(not able to|not allowed to|not to|not|none|non|no|never|unlikely) <VML Logic=lower_equal Unit=([^<>]*)>([^<>]+)</VML>,<VML Logic=greater Unit=\3>\4</VML>,process_negations
+(?<!(\w|<|>|=))(type|typ|stage|appendix|section|group|visit|part|version|grade|category|phase|class|number|no.)( - | of | )<VML Logic=([^<>]+) Unit=>([^<>]+)</VML>( to | - | and | or | )<VML Logic=([^<>]+) Unit=>([^<>]+)</VML>,\2\3\5\6\8,process_speical_numerics
+(?<!(\w|<|>|=))(type|typ|stage|appendix|section|group|visit|part|version|grade|category|phase|class|number|no.)( - | of | )<VML Logic=equal Unit=>([^<>]+)</VML>,\2\3\4,process_speical_numerics
+<VML Logic=([^<>]+) Unit=(x|times|time)>([^<>]+)</VML> <Unit>([^<>]+)</Unit>,<VML Logic=\1 Unit=times \4>\3</VML>,process_speical_numerics
+(\+/ -|\+ -|±)( |)<VML Logic=([^<>]+) Unit=([^<>]*)>([^<>]+)</VML>,\1 \3 \5,process_speical_numerics
+"<VML Logic=([^<>]+) Unit=( |)(-|~|of|)([^<>]+)(\)|]|}|,|\.|;|:|-)( |)>([^<>]+)</VML>",<VML Logic=\1 Unit=\4>\7</VML>\5\6,process_speical_numerics
+<Unit>([^<>]+)</Unit>,\1,remove_tags_cannot_combined
+<Logic>([^<>]+)</Logic>,\1,remove_tags_cannot_combined
+<VML>([^<>]+)</VML>,\1,remove_tags_cannot_combined
