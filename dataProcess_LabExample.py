@@ -13,7 +13,7 @@ Libs to install:
 
 import sys
 srcDir = '.'
-sys.path.append(srcDir + 'Valx')
+sys.path.append(srcDir + 'Valx_modified')
 
 import Valx_core as v
 import W_utility.file as ufile
