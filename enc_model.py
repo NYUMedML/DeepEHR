@@ -110,6 +110,74 @@ class concatNote(object):
                 'Demo': torch.from_numpy(Demo.reshape(1, -1)).float()
                 }
 
+class staticDataset(Dataset):
+    
+        # Each record is: [[text_enc1, text_enc2, ...], [num_enc1, num_enc2, ...], disease, mask, age, gender, race, eth]
+    def __init__(self, root_dir, dsName, nClassGender, nClassRace, nClassEthnic, transform=None):
+        self.root_dir = root_dir
+        self.ds = json.load(open(root_dir + dsName, 'r'))
+        print('Loaded: ', dsName)
+        self.transform = transform
+        self.nClass = [nClassGender, nClassRace, nClassEthnic]
+        self.max_len = 3000
+
+    def __len__(self):
+        return len(self.ds)
+
+
+    def __getitem__(self, idx):
+
+        """
+        Shape of the inputs:
+            - Note: 1 x n_enc x noteLength
+            - Num: 1 x n_enc x dimNum
+            - Disease: 1 x 3
+            - Mask: 1 x 3
+            - Age: 1
+            - Demo ([Gender, race, eth]): 1 x 3
+        """
+        
+        Note, Num, Disease, Mask, Age, gender, race, eth = self.ds[idx]
+
+        Note = np.asarray([item for sublist in Note for item in sublist])
+        Num = np.asarray(Num, dtype='float32').mean(axis=0)
+        Disease = np.asarray(Disease, dtype='int')
+        Mask = np.asarray(Mask, dtype='int')
+        Age = np.asarray(Age, dtype='float32')
+
+        if len(Note) > self.max_len:
+            Note = Note[:self.max_len]
+            
+        else:        
+            Note = np.concatenate([ np.zeros( self.max_len - Note.shape[0] ) , Note ])
+
+        Note = torch.from_numpy(Note).long()
+
+        gender2 = self._idx2onehot(gender, self.nClass[0])
+        race2 = self._idx2onehot(race, self.nClass[1])
+        eth2 = self._idx2onehot(eth, self.nClass[2])
+
+        Demo = np.concatenate([gender2, race2, eth2])
+        sample = {'Note': Note, 'Num': Num, 'Disease': Disease, 'Mask': Mask, 'Age': Age, 'Demo': Demo}
+
+        return {'Note': Note,
+                'Num': Num,
+                'Disease': torch.from_numpy(Disease.reshape(1, -1)).float(),
+                'Mask': torch.from_numpy(Mask.reshape(1, -1)).float(),
+                'Age': torch.from_numpy(Age.reshape(1, -1)).float(),
+                'Demo': torch.from_numpy(Demo.reshape(1, -1)).float()
+                }
+
+    def _idx2onehot(self, value_idx, max_idx):
+    
+        temp = np.zeros(max_idx)
+        if value_idx > 0:
+            temp[value_idx - 1] = 1
+        return temp
+
+  
+ 
+
 
 class padOrTruncateToTensor(object):
     """
@@ -668,6 +736,7 @@ class trainModel(object):
             nRec += Note.size()[0] - np.sum(Mask.numpy(), axis=0)[0]
             Note, Num, Disease, Mask, Age, Demo = Variable(Note).long(), Variable(Num).float(), Variable(
                 Disease).float(), Variable(Mask).float(), Variable(Age).float(), Variable(Demo).float()
+
 
             self.cnt_iter += 1
 

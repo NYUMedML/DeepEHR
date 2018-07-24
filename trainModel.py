@@ -12,6 +12,7 @@ import gc
 import pickle
 import os
 
+import models2 as m
 import enc_model as m3
 # import pandas as pd
 # from util import *
@@ -96,12 +97,25 @@ if __name__ == '__main__':
     # if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM']:
     embedding = pickle.load(open(args.inputPath + 'embedding.p', 'rb'))
     embedding = torch.from_numpy(embedding).float()
-    trainset_pos = m3.encDataset(args.inputPath, 'dfTrainPos.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
-                                 transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
-    trainset_neg = m3.encDataset(args.inputPath, 'dfTrainNeg.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
-                                 transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
-    testset = m3.encDataset(args.inputPath, 'dfDev.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
-                            transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
+    
+    if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM']:
+
+        trainset_pos = m3.encDataset(args.inputPath, 'dfTrainPos.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
+                                     transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
+        trainset_neg = m3.encDataset(args.inputPath, 'dfTrainNeg.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
+                                     transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
+        testset = m3.encDataset(args.inputPath, 'dfDev.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
+                                transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
+
+    else:
+        trainset_pos = m3.staticDataset(args.inputPath, 'dfTrainPos.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
+                                     transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
+        trainset_neg = m3.staticDataset(args.inputPath, 'dfTrainNeg.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
+                                     transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
+        testset = m3.staticDataset(args.inputPath, 'dfDev.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
+                                transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
+
+
 
     print('To Loader')
     if args.flg_cuda:
@@ -132,8 +146,24 @@ if __name__ == '__main__':
 
     print('Model parameters: ', model_paras)
 
-    model = getattr(m3, args.modelName)(model_paras, embedding)
-    # model.apply(weights_init)
+    if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM']:
+        model = getattr(m3, args.modelName)(model_paras, embedding)
+    else:
+        from argparse import Namespace
+
+        static_model_args = Namespace()
+        static_model_args.dropout = args.p_dropOut
+        static_model_args.batch_norm = args.batch_norm
+        static_model_args.kernels = args.nK
+        static_model_args.bidir = args.bidir
+        static_model_args.train_embed = args.train_embed
+        static_model_args.max_len = 2000
+        static_model_args.n_out = 3
+        static_model_args.h = args.filters
+        static_model_args.n_demo_feat = 208
+
+        model = getattr(m, args.modelName)(embedding , static_model_args)
+
 
     if args.flg_cuda:
         model = model.cuda()
