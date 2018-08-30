@@ -1,7 +1,26 @@
 # DeepEHR
 
 ## Synopsis
-Pre-trained embeddings and scripts to run / evaluate model as shown in Paper: link
+Pre-trained embeddings and scripts to run / evaluate model as shown in Paper: [link to Arxiv](https://arxiv.org/abs/1808.04928)
+```
+@article{liu2018deep,
+  title={Deep EHR: Chronic Disease Prediction Using Medical Notes},
+  author={Liu, Jingshu and Zhang, Zachariah and Razavian, Narges},
+  journal={arXiv preprint arXiv:1808.04928},
+  year={2018}
+}
+
+or 
+
+@article{liu2018deep,
+  title={Deep EHR: Chronic Disease Prediction Using Medical Notes},
+  author={Liu, Jingshu and Zhang, Zachariah and Razavian, Narges},
+  journal={Journal of Machine Learning Research (JMLR)},
+  conference={Machine Learning in Healthcare},
+  year={2018}
+}
+
+```
 
 ## Misc Details:
 - [Detailed descriptions and illustrations of available models](https://github.com/NYUMedML/DeepEHR/wiki/Models)
