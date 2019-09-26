@@ -98,7 +98,7 @@ if __name__ == '__main__':
     embedding = pickle.load(open(args.inputPath + 'embedding.p', 'rb'))
     embedding = torch.from_numpy(embedding).float()
     
-    if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM']:
+    if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM', 'DemoLab', 'Enc_CNN_LSTM_DemoLab']:
 
         trainset_pos = m3.encDataset(args.inputPath, 'dfTrainPos.json', args.nClassGender, args.nClassRace, args.nClassEthnic,
                                      transform=m3.padOrTruncateToTensor(args.enc_len, args.doc_len))
@@ -146,7 +146,7 @@ if __name__ == '__main__':
 
     print('Model parameters: ', model_paras)
 
-    if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM']:
+    if args.modelName in ['Enc_SumLSTM', 'Enc_CNN_LSTM', 'DemoLab', 'Enc_CNN_LSTM_DemoLab']:
         model = getattr(m3, args.modelName)(model_paras, embedding)
     else:
         from argparse import Namespace
