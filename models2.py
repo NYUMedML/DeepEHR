@@ -753,9 +753,18 @@ class trainModel(object):
                 param_group['lr'] = lr
         #pdb.set_trace()
         j,nRec = 0,0
+        if epoch == 0:
+            if self.train_loader_neg is not None:
+                self.train_iter_neg = self.train_loader_neg.__iter__()
+        
         for data, target in self.train_loader:
             if self.train_loader_neg is not None:
-                data_neg, target_neg = self.train_loader_neg.__iter__().__next__()
+                try:
+                    data_neg, target_neg = self.train_iter_neg.__next__()
+                except StopIteration:
+                    self.train_iter_neg = self.train_loader_neg.__iter__()
+                    data_neg, target_neg = self.train_iter_neg.__next__()
+                
                 data = torch.cat([data, data_neg], 0)
                 target = torch.cat([target, target_neg], 0)
 
