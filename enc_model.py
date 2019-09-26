@@ -225,6 +225,101 @@ class padOrTruncateToTensor(object):
 
 ## ======= Models =========
 
+class Enc_SumLSTM(nn.Module):
+
+    def __init__(self, model_paras, embedding = None):
+        """
+        model_paras:
+            - enc_len: max number of encounters in each sample
+            - doc_len: max number of words in each enc, input dimension should be [batchSize, enc_len, doc_len]
+            - flg_updateEmb: whether to train embeddings or not
+            - batchSize: batch size
+            - rnnType: 'GRU' or 'LSTM'
+            - bidir: whether to train bi-directional RNN or not
+            - p_dropOut: dropOut percentage
+            - lsDim: dimensions of [hidden_state, linear dimension 1, linear dimension 2...]
+            - flg_cuda: use GPU or not
+            - emb_dim: embedding dimension, do not need if provide embedding
+            - n_words: vocabulary size,  do not need if provide embedding
+        To-do:
+            expand to handle more than 1 linear layers
+        """
+
+        super(Enc_SumLSTM,self).__init__()
+
+        #self.enc_len = model_paras.get('enc_len', 15)
+        self.doc_len = model_paras.get('doc_len', 20)
+        flg_updateEmb = model_paras.get('flg_updateEmb', False)
+        self.model_paras = model_paras
+        self.rnnType = model_paras.get('rnnType', 'GRU')
+        self.bidir = model_paras.get('bidir', False)
+        self.p_dropOut = model_paras.get('p_dropOut', 0.8)
+        self.lsDim = model_paras.get('lsDim', [128, 1]) 
+        self.flg_cuda = model_paras.get('flg_cuda', True)
+        
+        
+        if embedding is not None:        
+            self.n_words = embedding.size()[0]
+            self.emb_dim = embedding.size()[1]
+            self.embed = nn.Embedding(self.n_words, self.emb_dim)
+            self.embed.weight = nn.Parameter(embedding,requires_grad=flg_updateEmb)
+        else:
+            self.n_words = model_paras.get('n_words', 20000)
+            self.emb_dim = model_paras.get('emb_dim', 300)
+            self.embed = nn.Embedding(self.n_words, self.emb_dim)
+            
+        self.lstm = getattr(nn, self.rnnType)(self.emb_dim, self.lsDim[0], 1, batch_first=True, bidirectional = self.bidir, dropout= self.p_dropOut)
+
+        if self.bidir:
+            self.fc = nn.Linear(2*self.lsDim[0], self.lsDim[1])
+        else:
+            self.fc = nn.Linear(self.lsDim[0], self.lsDim[1])
+        
+        self.params = list(self.lstm.parameters()) + list(self.fc.parameters())
+        if flg_updateEmb:
+            self.params += list(self.embed.parameters())
+        
+
+    def init_hidden(self, batchSize, nlayer = 1):
+        # Before we've done anything, we dont have any hidden state.
+        # Refer to the Pytorch documentation to see exactly
+        # why they have this dimensionality.
+        # The axes semantics are (num_layers, minibatch_size, hidden_dim)
+        if self.rnnType == 'LSTM':
+            if self.flg_cuda:
+                return  (Variable(torch.zeros(nlayer, batchSize, self.lsDim[0])).cuda(), Variable(torch.zeros(nlayer, batchSize, self.lsDim[0])).cuda() )
+            else:
+                return (Variable(torch.zeros(nlayer, batchSize, self.lsDim[0])), Variable(torch.zeros(nlayer, batchSize, self.lsDim[0])))
+        else:
+            if self.flg_cuda:
+                return Variable(torch.zeros(nlayer, batchSize, self.lsDim[0])).cuda()
+            else:
+                return Variable(torch.zeros(nlayer, batchSize, self.lsDim[0]))
+            
+    def forward(self,x):
+        batchSize = x.size()[0]
+        x= x.view(-1,self.doc_len)
+
+        E= self.embed(x)
+
+        E = torch.chunk(E, batchSize, 0)
+        E = torch.stack(E)
+        E = E.sum(2)
+        #x = x.transpose(1,2)
+
+        if self.bidir:
+            h0 = self.init_hidden(batchSize = batchSize, nlayer = 2)
+            z = self.lstm(E, h0)[1]
+            z = torch.cat([ z[0].squeeze() , z[1].squeeze()] , 1)
+
+        else:
+            h0 = self.init_hidden(batchSize = batchSize, nlayer = 1)
+            z = self.lstm(E, h0)[0][:, -1, :]
+
+        y_hat = self.fc(z)
+        return F.sigmoid(y_hat)
+
+
 class Enc_CNN_LSTM(nn.Module):
 
     def __init__(self, model_paras, embedding=None):
@@ -714,14 +809,28 @@ class trainModel(object):
         self.Y_multi_train = []
         self.target_multi_train = []
         self.mask_train = []
+        
+        if epoch == 0:
+            self.train_iter = self.train_loader.__iter__()
+            if self.train_loader_neg is not None:
+                self.train_iter_neg = self.train_loader_neg.__iter__()
 
-        while j <= 1000:
-            # for batch_idx, sample in enumerate(self.train_loader):
-            sample = self.train_loader.__iter__().__next__()
+        while (j <= 1000):
+            try:
+                sample = self.train_iter.__next__()
+            except StopIteration:
+                self.train_iter = self.train_loader.__iter__()
+                sample = self.train_iter.__next__()
+
             Note, Num, Disease, Mask, Age, Demo = sample['Note'], sample['Num'], sample['Disease'], sample['Mask'], \
                                                   sample['Age'], sample['Demo']
             if self.train_loader_neg is not None:
-                sample_neg = self.train_loader_neg.__iter__().__next__()
+                try:
+                    sample_neg = self.train_iter_neg.__next__()
+                except StopIteration:
+                    self.train_iter_neg = self.train_loader_neg.__iter__()
+                    sample = self.train_iter_neg.__next__()
+                
                 Note_neg, Num_neg, Disease_neg, Mask_neg, Age_neg, Demo_neg = sample_neg['Note'], sample_neg['Num'], \
                                                                               sample_neg['Disease'], sample_neg['Mask'], \
                                                                               sample_neg['Age'], sample_neg['Demo']
