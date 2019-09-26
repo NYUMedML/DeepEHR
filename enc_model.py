@@ -829,7 +829,7 @@ class trainModel(object):
                     sample_neg = self.train_iter_neg.__next__()
                 except StopIteration:
                     self.train_iter_neg = self.train_loader_neg.__iter__()
-                    sample = self.train_iter_neg.__next__()
+                    sample_neg = self.train_iter_neg.__next__()
                 
                 Note_neg, Num_neg, Disease_neg, Mask_neg, Age_neg, Demo_neg = sample_neg['Note'], sample_neg['Num'], \
                                                                               sample_neg['Disease'], sample_neg['Mask'], \
